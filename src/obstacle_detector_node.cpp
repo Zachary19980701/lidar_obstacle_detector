@@ -6,20 +6,23 @@
 
 **/
 
-#include <autoware_msgs/DetectedObjectArray.h>
-#include <dynamic_reconfigure/server.h>
+#include <autoware_msgs/DetectedObjectArray.h>  //autoware dectect array
+#include <dynamic_reconfigure/server.h> //参数配置服务器
 #include <geometry_msgs/PoseStamped.h>
+//碰撞盒头文件
 #include <jsk_recognition_msgs/BoundingBox.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <lidar_obstacle_detector/obstacle_detectorConfig.h>
+
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 #include <ros/console.h>
 #include <ros/ros.h>
+
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
 
-#include "lidar_obstacle_detector/obstacle_detector.hpp"
+#include "lidar_obstacle_detector/obstacle_detector.hpp" //主要的算法的头文件
 
 namespace lidar_obstacle_detector {
 
@@ -33,7 +36,8 @@ float CLUSTER_THRESH;
 int CLUSTER_MAX_SIZE, CLUSTER_MIN_SIZE;
 float DISPLACEMENT_THRESH, IOU_THRESH;
 
-class ObstacleDetectorNode {
+
+class ObstacleDetectorNode {  //障碍物检测节点
  public:
   ObstacleDetectorNode();
   virtual ~ObstacleDetectorNode() {}
@@ -74,6 +78,8 @@ class ObstacleDetectorNode {
       std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &&cloud_clusters,
       const std_msgs::Header &header);
 };
+
+
 
 // Dynamic parameter server callback function
 void dynamicParamCallback(
