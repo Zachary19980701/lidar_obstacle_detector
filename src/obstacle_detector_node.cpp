@@ -6,7 +6,7 @@
 
 **/
 
-#include <autoware_msgs/DetectedObjectArray.h>  //autoware dectect array
+//#include <autoware_msgs/DetectedObjectArray.h>  //autoware dectect array
 #include <dynamic_reconfigure/server.h> //参数配置服务器
 #include <geometry_msgs/PoseStamped.h>
 //碰撞盒头文件
@@ -126,8 +126,8 @@ ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
       nh.advertise<sensor_msgs::PointCloud2>(cloud_clusters_topic, 1);
   pub_jsk_bboxes =
       nh.advertise<jsk_recognition_msgs::BoundingBoxArray>(jsk_bboxes_topic, 1);
-  pub_autoware_objects = nh.advertise<autoware_msgs::DetectedObjectArray>(
-      autoware_objects_topic, 1);
+  //pub_autoware_objects = nh.advertise<autoware_msgs::DetectedObjectArray>(
+  //  autoware_objects_topic, 1);
 
   // Dynamic Parameter Server & Function
   f = boost::bind(&dynamicParamCallback, _1, _2);
@@ -272,8 +272,8 @@ void ObstacleDetectorNode::publishDetectedObjects(
   // Construct Bounding Boxes from the clusters
   jsk_recognition_msgs::BoundingBoxArray jsk_bboxes;
   jsk_bboxes.header = bbox_header;
-  autoware_msgs::DetectedObjectArray autoware_objects;
-  autoware_objects.header = bbox_header;
+  //autoware_msgs::DetectedObjectArray autoware_objects;
+  //autoware_objects.header = bbox_header;
 
   // Transform boxes from lidar frame to base_link frame, and convert to jsk and
   // autoware msg formats
