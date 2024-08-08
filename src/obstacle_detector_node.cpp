@@ -71,9 +71,9 @@ class ObstacleDetectorNode {  //障碍物检测节点
   jsk_recognition_msgs::BoundingBox transformJskBbox(
       const Box &box, const std_msgs::Header &header,
       const geometry_msgs::Pose &pose_transformed);
-  autoware_msgs::DetectedObject transformAutowareObject(
+  /*autoware_msgs::DetectedObject transformAutowareObject(
       const Box &box, const std_msgs::Header &header,
-      const geometry_msgs::Pose &pose_transformed);
+      const geometry_msgs::Pose &pose_transformed);*/
   void publishDetectedObjects(
       std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &&cloud_clusters,
       const std_msgs::Header &header);
@@ -209,6 +209,8 @@ jsk_recognition_msgs::BoundingBox ObstacleDetectorNode::transformJskBbox(
   return std::move(jsk_bbox);
 }
 
+
+/*
 autoware_msgs::DetectedObject ObstacleDetectorNode::transformAutowareObject(
     const Box &box, const std_msgs::Header &header,
     const geometry_msgs::Pose &pose_transformed) {
@@ -226,6 +228,8 @@ autoware_msgs::DetectedObject ObstacleDetectorNode::transformAutowareObject(
 
   return std::move(autoware_object);
 }
+*/
+
 
 void ObstacleDetectorNode::publishDetectedObjects(
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &&cloud_clusters,
@@ -290,11 +294,11 @@ void ObstacleDetectorNode::publishDetectedObjects(
 
     jsk_bboxes.boxes.emplace_back(
         transformJskBbox(box, bbox_header, pose_transformed));
-    autoware_objects.objects.emplace_back(
-        transformAutowareObject(box, bbox_header, pose_transformed));
+    //autoware_objects.objects.emplace_back(
+    //    transformAutowareObject(box, bbox_header, pose_transformed));
   }
   pub_jsk_bboxes.publish(std::move(jsk_bboxes));
-  pub_autoware_objects.publish(std::move(autoware_objects));
+  //pub_autoware_objects.publish(std::move(autoware_objects));
 
   // Update previous bounding boxes
   prev_boxes_.swap(curr_boxes_);
