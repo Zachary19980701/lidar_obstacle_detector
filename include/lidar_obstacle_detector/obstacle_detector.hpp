@@ -250,9 +250,10 @@ ObstacleDetector<PointT>::segmentPlane(
 
   //添加过滤器
   pcl::ConditionAnd<pcl::PointXYZ>::Ptr range_cond (new pcl::ConditionAnd<pcl::PointXYZ> ());
-  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 0.5)));
+  // 设置条件：z坐标必须小于或等于输入参数 
+  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, distance_thresh)));
+
   
-  // 设置条件：z坐标必须小于或等于0.5米 
   condrem.setInputCloud(cloud); 
   condrem.setCondition(range_cond); 
   
@@ -263,18 +264,30 @@ ObstacleDetector<PointT>::segmentPlane(
 
   
   // Segment the largest planar component from the input cloud
+
+
+  /*
+  使用平面模型对地面点进行分割，室内暂时不需要使用地面点进行分割
   seg.setInputCloud(filtered_cloud);
   seg.segment(*inliers, *coefficients); //使用平面模型对点云进行分割
   if (inliers->indices.empty()) {
     std::cout << "Could not estimate a planar model for the given dataset."
               << std::endl;
   }
+  */
+  
 
   // const auto end_time = std::chrono::steady_clock::now();
   // const auto elapsed_time =
   // std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
   // start_time); std::cout << "plane segmentation took " <<
   // elapsed_time.count() << " milliseconds" << std::endl;
+
+
+  // 遍历过滤后的点云，将索引添加到 inliers 中  
+  for (size_t i = 0; i < filtered_cloud->points.size(); ++i) {  
+      inliers->indices.push_back(i);
+  }  
 
   return separateClouds(inliers, cloud);
 }
