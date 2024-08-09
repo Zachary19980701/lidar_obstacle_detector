@@ -138,6 +138,8 @@ ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
   obstacle_id_ = 0;
 }
 
+
+//雷达点云
 void ObstacleDetectorNode::lidarPointsCallback(
     const sensor_msgs::PointCloud2::ConstPtr &lidar_points) {
   ROS_DEBUG("lidar points recieved");
@@ -178,6 +180,8 @@ void ObstacleDetectorNode::lidarPointsCallback(
            static_cast<float>(elapsed_time.count() / 1000.0));
 }
 
+
+//发送点云信息
 void ObstacleDetectorNode::publishClouds(
     const std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr,
                     pcl::PointCloud<pcl::PointXYZ>::Ptr> &&segmented_clouds,
@@ -194,6 +198,8 @@ void ObstacleDetectorNode::publishClouds(
   pub_cloud_clusters.publish(std::move(obstacle_cloud));
 }
 
+
+//发送jsk碰撞盒信息，待移除
 jsk_recognition_msgs::BoundingBox ObstacleDetectorNode::transformJskBbox(
     const Box &box, const std_msgs::Header &header,
     const geometry_msgs::Pose &pose_transformed) {
@@ -236,10 +242,13 @@ void ObstacleDetectorNode::publishDetectedObjects(
     const std_msgs::Header &header) {
   for (auto &cluster : cloud_clusters) {
     // Create Bounding Boxes
+    /*
     Box box =
         USE_PCA_BOX
             ? obstacle_detector->pcaBoundingBox(cluster, obstacle_id_)
             : obstacle_detector->axisAlignedBoundingBox(cluster, obstacle_id_);
+    */
+    Box box = obstacle_detector->pcaBoundingBox(cluster, obstacle_id_);
 
     obstacle_id_ = (obstacle_id_ < SIZE_MAX) ? ++obstacle_id_ : 0;
     curr_boxes_.emplace_back(box);

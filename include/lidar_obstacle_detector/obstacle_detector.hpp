@@ -17,6 +17,8 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/point_types.h>  
+#include <pcl/filters/conditional_removal.h>  
 
 #include <algorithm>
 #include <ctime>
@@ -228,6 +230,9 @@ ObstacleDetector<PointT>::segmentPlane(
   // const auto start_time = std::chrono::steady_clock::now();
 
   // Find inliers for the cloud.
+
+  //添加地面高度限制
+
   pcl::SACSegmentation<PointT> seg;
   pcl::PointIndices::Ptr inliers{new pcl::PointIndices};
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients); //声明了一个平面模型
@@ -238,8 +243,27 @@ ObstacleDetector<PointT>::segmentPlane(
   seg.setMaxIterations(max_iterations);
   seg.setDistanceThreshold(distance_thresh);
 
+
+  //设置地面高度过滤函数
+  pcl::ConditionalRemoval<pcl::PointXYZ> condrem;
+  
+
+  //添加过滤器
+  pcl::ConditionAnd<pcl::PointXYZ>::Ptr range_cond (new pcl::ConditionAnd<pcl::PointXYZ> ());
+  range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 0.5)));
+  
+  // 设置条件：z坐标必须小于或等于0.5米 
+  condrem.setInputCloud(cloud); 
+  condrem.setCondition(range_cond); 
+  
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);  
+      
+    // 应用过滤条件并获取结果  
+  condrem.filter(*filtered_cloud);
+
+  
   // Segment the largest planar component from the input cloud
-  seg.setInputCloud(cloud);
+  seg.setInputCloud(filtered_cloud);
   seg.segment(*inliers, *coefficients); //使用平面模型对点云进行分割
   if (inliers->indices.empty()) {
     std::cout << "Could not estimate a planar model for the given dataset."
