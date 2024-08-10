@@ -572,6 +572,11 @@ std::vector<std::vector<int>> ObstacleDetector<PointT>::connectionMatrix(
   return connection_matrix;
 }
 
+
+/*
+hungarianFind函数，实现二分图左右两侧寻找最适合的匹配节点。
+左侧表示当前帧的障碍物，右侧表示前一帧的障碍物。
+*/
 template <typename PointT>
 bool ObstacleDetector<PointT>::hungarianFind(
     const int i, const std::vector<std::vector<int>> &connection_matrix,
@@ -592,6 +597,11 @@ bool ObstacleDetector<PointT>::hungarianFind(
   return false;
 }
 
+
+/*
+hungarian匹配算法入口
+用于匹配连续帧之间检测的障碍物
+*/
 template <typename PointT>
 std::vector<int> ObstacleDetector<PointT>::hungarian(
     const std::vector<std::vector<int>> &connection_matrix) {

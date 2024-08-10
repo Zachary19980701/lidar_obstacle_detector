@@ -63,7 +63,7 @@ class ObstacleDetectorNode {  //障碍物检测节点
   //ros::Publisher pub_jsk_bboxes;
   //ros::Publisher pub_autoware_objects;
   ros::Publisher pub_mbbox;
-  ros::Timer timer20_;
+
 
 
   void lidarPointsCallback(
@@ -105,9 +105,6 @@ void dynamicParamCallback(
   IOU_THRESH = config.iou_threshold;
 }
 
-void Timer20CB(const ros::TimerEvent& e){
-     //todo
-   }
 
 ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
   ros::NodeHandle private_nh("~");
@@ -211,6 +208,7 @@ void ObstacleDetectorNode::publishClouds(
 
 
 //发送jsk碰撞盒信息，待移除
+/*
 jsk_recognition_msgs::BoundingBox ObstacleDetectorNode::transformJskBbox(
     const Box &box, const std_msgs::Header &header,
     const geometry_msgs::Pose &pose_transformed) {
@@ -225,6 +223,7 @@ jsk_recognition_msgs::BoundingBox ObstacleDetectorNode::transformJskBbox(
 
   return std::move(jsk_bbox);
 }
+*/
 
 
 
