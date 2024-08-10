@@ -13,12 +13,13 @@
 #include <jsk_recognition_msgs/BoundingBox.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <lidar_obstacle_detector/obstacle_detectorConfig.h>
-
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 #include <ros/console.h>
 #include <ros/ros.h>
-
+#include "visualization_msgs/Marker.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -59,8 +60,11 @@ class ObstacleDetectorNode {  //障碍物检测节点
   ros::Subscriber sub_lidar_points;
   ros::Publisher pub_cloud_ground;
   ros::Publisher pub_cloud_clusters;
-  ros::Publisher pub_jsk_bboxes;
-  ros::Publisher pub_autoware_objects;
+  //ros::Publisher pub_jsk_bboxes;
+  //ros::Publisher pub_autoware_objects;
+  ros::Publisher pub_mbbox;
+  ros::Timer timer20_;
+
 
   void lidarPointsCallback(
       const sensor_msgs::PointCloud2::ConstPtr &lidar_points);
@@ -101,6 +105,10 @@ void dynamicParamCallback(
   IOU_THRESH = config.iou_threshold;
 }
 
+void Timer20CB(const ros::TimerEvent& e){
+     //todo
+   }
+
 ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
   ros::NodeHandle private_nh("~");
 
@@ -109,6 +117,7 @@ ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
   std::string cloud_clusters_topic;
   std::string jsk_bboxes_topic;
   std::string autoware_objects_topic;
+  std::string mbbox = "mbbox";
 
   ROS_ASSERT(private_nh.getParam("lidar_points_topic", lidar_points_topic));
   ROS_ASSERT(private_nh.getParam("cloud_ground_topic", cloud_ground_topic));
@@ -124,8 +133,9 @@ ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
       nh.advertise<sensor_msgs::PointCloud2>(cloud_ground_topic, 1);
   pub_cloud_clusters =
       nh.advertise<sensor_msgs::PointCloud2>(cloud_clusters_topic, 1);
-  pub_jsk_bboxes =
-      nh.advertise<jsk_recognition_msgs::BoundingBoxArray>(jsk_bboxes_topic, 1);
+  //pub_jsk_bboxes =
+  //    nh.advertise<jsk_recognition_msgs::BoundingBoxArray>(jsk_bboxes_topic, 1);
+  pub_mbbox = nh.advertise<visualization_msgs::MarkerArray>(mbbox, 1);
   //pub_autoware_objects = nh.advertise<autoware_msgs::DetectedObjectArray>(
   //  autoware_objects_topic, 1);
 
@@ -136,6 +146,7 @@ ObstacleDetectorNode::ObstacleDetectorNode() : tf2_listener(tf2_buffer) {
   // Create point processor
   obstacle_detector = std::make_shared<ObstacleDetector<pcl::PointXYZ>>();
   obstacle_id_ = 0;
+  //timer20_ = nh.createTimer(20.0, &ObstacleDetector::Timer20CB, this);
 }
 
 
@@ -216,6 +227,9 @@ jsk_recognition_msgs::BoundingBox ObstacleDetectorNode::transformJskBbox(
 }
 
 
+
+
+
 /*
 autoware_msgs::DetectedObject ObstacleDetectorNode::transformAutowareObject(
     const Box &box, const std_msgs::Header &header,
@@ -248,7 +262,7 @@ void ObstacleDetectorNode::publishDetectedObjects(
             ? obstacle_detector->pcaBoundingBox(cluster, obstacle_id_)
             : obstacle_detector->axisAlignedBoundingBox(cluster, obstacle_id_);
     */
-    Box box = obstacle_detector->pcaBoundingBox(cluster, obstacle_id_);
+    Box box = obstacle_detector->pcaBoundingBox(cluster, obstacle_id_); //直接使用PCA方法获得碰撞盒
 
     obstacle_id_ = (obstacle_id_ < SIZE_MAX) ? ++obstacle_id_ : 0;
     curr_boxes_.emplace_back(box);
@@ -283,10 +297,12 @@ void ObstacleDetectorNode::publishDetectedObjects(
   }
 
   // Construct Bounding Boxes from the clusters
-  jsk_recognition_msgs::BoundingBoxArray jsk_bboxes;
-  jsk_bboxes.header = bbox_header;
+  //jsk_recognition_msgs::BoundingBoxArray jsk_bboxes;
+  //jsk_bboxes.header = bbox_header;
   //autoware_msgs::DetectedObjectArray autoware_objects;
   //autoware_objects.header = bbox_header;
+  visualization_msgs::MarkerArray m_bboxes;
+  uint32_t shape = visualization_msgs::Marker::CUBE;
 
   // Transform boxes from lidar frame to base_link frame, and convert to jsk and
   // autoware msg formats
@@ -300,21 +316,47 @@ void ObstacleDetectorNode::publishDetectedObjects(
     pose.orientation.y = box.quaternion.y();
     pose.orientation.z = box.quaternion.z();
     tf2::doTransform(pose, pose_transformed, transform_stamped);
+    
 
-    jsk_bboxes.boxes.emplace_back(
-        transformJskBbox(box, bbox_header, pose_transformed));
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "livox_frame";
+    marker.header.stamp = ros::Time::now();
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose = pose_transformed;
+    marker.scale.x = box.dimension(0);
+    marker.scale.y = box.dimension(1);
+    marker.scale.z = box.dimension(2);
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    marker.color.a = 0.5;
+    marker.lifetime = ros::Duration(0.2);
+    marker.id = box.id;
+    //marker.id = 1;
+
+    m_bboxes.markers.push_back(marker);
+
+
+    //jsk_bboxes.boxes.emplace_back(
+    //    transformJskBbox(box, bbox_header, pose_transformed));
     //autoware_objects.objects.emplace_back(
     //    transformAutowareObject(box, bbox_header, pose_transformed));
   }
-  pub_jsk_bboxes.publish(std::move(jsk_bboxes));
+  //pub_jsk_bboxes.publish(std::move(jsk_bboxes));
   //pub_autoware_objects.publish(std::move(autoware_objects));
-
+  pub_mbbox.publish(std::move(m_bboxes));
   // Update previous bounding boxes
   prev_boxes_.swap(curr_boxes_);
   curr_boxes_.clear();
 }
 
+
+
+
 }  // namespace lidar_obstacle_detector
+
+
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "obstacle_detector_node");
